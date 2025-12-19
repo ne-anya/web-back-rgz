@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="welcome-card">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#5a67d8" class="bi bi-shield-lock me-2" viewBox="0 0 16 16">
+                            <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/>
+                            <path d="M9.5 6.5a1.5 1.5 0 0 1-1 1.415l.385 1.99a.5.5 0 0 1-.491.595h-.788a.5.5 0 0 1-.49-.595l.384-1.99a1.5 1.5 0 1 1 2-1.415z"/>
+                        </svg>
+                        Панель администратора
+                    </h2>
+                    <p class="text-muted mb-0">Управление пользователями и системой</p>
+                </div>
+                <a href="{{ url_for('users_page') }}" class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                    Вернуться к чатам
+                </a>
+            </div>
+            
+            <!-- Статистика -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 rounded-3" style="background: var(--pastel-blue);">
+                        <div class="small text-muted">Всего пользователей</div>
+                        <div class="h4 mb-0" id="total-users">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 rounded-3" style="background: var(--pastel-green);">
+                        <div class="small text-muted">Администраторов</div>
+                        <div class="h4 mb-0" id="admin-count">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 rounded-3" style="background: var(--pastel-pink);">
+                        <div class="small text-muted">Всего сообщений</div>
+                        <div class="h4 mb-0" id="total-messages">-</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 rounded-3" style="background: var(--pastel-lavender);">
+                        <div class="small text-muted">Активных сегодня</div>
+                        <div class="h4 mb-0" id="active-today">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Поиск и фильтры -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="adminSearch" 
+                                   placeholder="Поиск по имени пользователя...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="roleFilter">
+                                <option value="">Все роли</option>
+                                <option value="admin">Администраторы</option>
+                                <option value="user">Пользователи</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" onclick="loadAdminUsers()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                </svg>
+                                Поиск
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Таблица пользователей -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Логин</th>
+                            <th>Роль</th>
+                            <th>Сообщений</th>
+                            <th>Дата регистрации</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-users-table">
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Загрузка...</span>
+                                </div>
+                                <p class="mt-2">Загрузка пользователей...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Пагинация -->
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div id="admin-user-count" class="text-muted"></div>
+                <nav id="admin-pagination" aria-label="Навигация по пользователям">
+                    <!-- Пагинация будет добавлена через JavaScript -->
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования пользователя -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактирование пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Логин</label>
+                        <input type="text" class="form-control" id="edit-username" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit-is-admin">
+                            <label class="form-check-label" for="edit-is-admin">
+                                Администратор
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Новый пароль (оставьте пустым, чтобы не менять)</label>
+                        <input type="password" class="form-control" id="edit-password">
+                        <div class="form-text">Минимум 6 символов</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserChanges()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удаление пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger">Внимание! Это действие нельзя отменить.</p>
+                <p>Все сообщения пользователя будут удалены.</p>
+                <p id="delete-user-info"></p>
+                <p>Вы уверены, что хотите удалить этого пользователя?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteUser()">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let adminCurrentPage = 1;
+    let adminLimit = 10;
+    let userToDelete = null;
+    
+    // Функция для JSON-RPC вызовов
+    async function jsonRpcCall(method, params = {}) {
+        try {
+            const response = await fetch('/api', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: method,
+                    params: params,
+                    id: Date.now()
+                })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('JSON-RPC error:', error);
+            return {error: {message: 'Ошибка сети'}};
+        }
+    }
+    
+    // Загрузка статистики
+    async function loadStatistics() {
+        const result = await jsonRpcCall('admin_get_all_users', {limit: 1000});
+        
+        if (result.error) {
+            console.error('Ошибка загрузки статистики:', result.error);
+            return;
+        }
+        
+        const users = result.result.users;
+        
+        // Общая статистика
+        document.getElementById('total-users').textContent = users.length;
+        
+        const admins = users.filter(u => u.is_admin).length;
+        document.getElementById('admin-count').textContent = admins;
+        
+        // Подсчет сообщений
+        const totalMessages = users.reduce((sum, user) => 
+            sum + user.messages_sent + user.messages_received, 0);
+        document.getElementById('total-messages').textContent = totalMessages;
+        
+        // Активные сегодня (простая заглушка)
+        const activeToday = Math.floor(users.length * 0.3); // 30% от общего числа
+        document.getElementById('active-today').textContent = activeToday;
+    }
+    
+    // Загрузка пользователей для админки
+    async function loadAdminUsers(page = 1) {
+        adminCurrentPage = page;
+    
+        const table = document.getElementById('admin-users-table');
+        table.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка пользователей...</p>
+                </td>
+            </tr>
+        `;
+    
+        const offset = (page - 1) * adminLimit;
+        const search = document.getElementById('adminSearch').value.trim();
+        const roleFilter = document.getElementById('roleFilter').value;
+    
+        console.log("Поиск пользователей:", { search, roleFilter, offset });
+    
+        // Создаем параметры для запроса
+        const params = {
+            limit: adminLimit,
+            offset: offset
+        };
+    
+        // Добавляем параметры поиска если они есть
+        if (search) {
+            params.search = search;
+        }
+    
+        if (roleFilter) {
+            params.role_filter = roleFilter;
+        }
+    
+        console.log("Параметры запроса:", params);
+    
+        const result = await jsonRpcCall('admin_get_all_users', params);
+    
+        console.log("Результат:", result);
+    
+        if (result.error) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-danger">
+                        Ошибка: ${result.error.message}
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+    
+        const users = result.result.users;
+        const total = result.result.total;
+    
+        // Обновляем счетчик
+        document.getElementById('admin-user-count').textContent = 
+            `Показано ${users.length} из ${total} пользователей`;
+    
+        // Очищаем таблицу
+        let html = '';
+    
+        if (users.length === 0) {
+            html = `
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        ${search || roleFilter ? 'Пользователи не найдены' : 'Нет пользователей'}
+                    </td>
+                </tr>
+            `;
+        } else {
+            users.forEach(user => {
+                const registerDate = user.created_at ? 
+                    (typeof user.created_at === 'string' ? 
+                        user.created_at.substring(0, 10) : 
+                        user.created_at) : 
+                    'Неизвестно';
+            
+                const messagesTotal = (user.messages_sent || 0) + (user.messages_received || 0);
+            
+                html += `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2" style="width: 32px; height: 32px; 
+                                                                   background: var(--pastel-blue);">
+                                    ${user.username[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <div>${user.username}</div>
+                                    ${user.id === {{ current_user.id }} ? 
+                                        '<small class="text-muted">(вы)</small>' : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            ${user.is_admin ? 
+                                '<span class="admin-badge">Admin</span>' : 
+                                '<span class="badge bg-light text-dark">User</span>'}
+                        </td>
+                        <td>${messagesTotal}</td>
+                        <td>${registerDate}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline" 
+                                        onclick="editUser(${user.id})"
+                                        ${user.id === {{ current_user.id }} ? 'disabled' : ''}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                                    </svg>
+                                </button>
+                                <button class="btn btn-outline text-danger" 
+                                        onclick="deleteUser(${user.id}, '${user.username.replace("'", "\\'")}')"
+                                        ${user.id === {{ current_user.id }} ? 'disabled' : ''}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;  
+            });
+    }
+
+    // Автоматический поиск при изменении фильтра ролей
+    document.getElementById('roleFilter').addEventListener('change', function() {
+    loadAdminUsers(1);
+    });
+
+    // Кнопка сброса фильтров (добавьте в HTML после кнопки поиска)
+    function addResetButton() {
+        const searchRow = document.querySelector('.row.g-3');
+        const resetButton = `
+            <div class="col-md-12 mt-2">
+                <button class="btn btn-outline btn-sm" onclick="resetFilters()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-x-circle me-1" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    Сбросить фильтры
+                </button>
+            </div>
+        `;
+    
+        // Если кнопка еще не добавлена
+        if (!document.getElementById('reset-filters-btn')) {
+            searchRow.insertAdjacentHTML('afterend', resetButton);
+        }
+    }
+
+    // Функция сброса фильтров
+    function resetFilters() {
+        document.getElementById('adminSearch').value = '';
+        document.getElementById('roleFilter').value = '';
+        loadAdminUsers(1);
+    }
+
+    // Добавляем кнопку при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStatistics();
+        loadAdminUsers(1);
+        addResetButton();
+    
+        // Обработка Enter в поле поиска
+        document.getElementById('adminSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loadAdminUsers(1);
+            }
+        });
+    });
+    
+    table.innerHTML = html;
+    
+    // Создаем пагинацию
+    createPagination(total, adminLimit, page);
+}
+
+    // Создание пагинации
+    function createPagination(total, limit, currentPage) {
+        const totalPages = Math.ceil(total / limit);
+        const pagination = document.getElementById('admin-pagination');
+        
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+        
+        let html = '<ul class="pagination pagination-sm mb-0">';
+        
+        // Кнопка "Назад"
+        if (currentPage > 1) {
+            html += `
+                <li class="page-item">
+                    <button class="page-link" onclick="loadAdminUsers(${currentPage - 1})">
+                        &laquo;
+                    </button>
+                </li>
+            `;
+        }
+        
+        // Номера страниц
+        const maxPages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+        let endPage = Math.min(totalPages, startPage + maxPages - 1);
+        
+        if (endPage - startPage + 1 < maxPages) {
+            startPage = Math.max(1, endPage - maxPages + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <button class="page-link" onclick="loadAdminUsers(${i})">
+                        ${i}
+                    </button>
+                </li>
+            `;
+        }
+        
+        // Кнопка "Вперед"
+        if (currentPage < totalPages) {
+            html += `
+                <li class="page-item">
+                    <button class="page-link" onclick="loadAdminUsers(${currentPage + 1})">
+                        &raquo;
+                    </button>
+                </li>
+            `;
+        }
+        
+        html += '</ul>';
+        pagination.innerHTML = html;
+    }
+    
+    // Редактирование пользователя
+    async function editUser(userId) {
+        const result = await jsonRpcCall('get_user_info', {user_id: userId});
+        
+        if (result.error) {
+            alert('Ошибка: ' + result.error.message);
+            return;
+        }
+        
+        const user = result.result;
+        
+        document.getElementById('edit-user-id').value = user.id;
+        document.getElementById('edit-username').value = user.username;
+        document.getElementById('edit-is-admin').checked = user.is_admin;
+        document.getElementById('edit-password').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+        modal.show();
+    }
+    
+    // Сохранение изменений пользователя
+    async function saveUserChanges() {
+        const userId = document.getElementById('edit-user-id').value;
+        const isAdmin = document.getElementById('edit-is-admin').checked;
+        const newPassword = document.getElementById('edit-password').value.trim();
+        
+        const params = {
+            user_id: parseInt(userId),
+            is_admin: isAdmin
+        };
+        
+        if (newPassword) {
+            if (newPassword.length < 6) {
+                alert('Пароль должен содержать минимум 6 символов');
+                return;
+            }
+            params.new_password = newPassword;
+        }
+        
+        const result = await jsonRpcCall('admin_update_user', params);
+        
+        if (result.error) {
+            alert('Ошибка: ' + result.error.message);
+            return;
+        }
+        
+        // Закрываем модальное окно и обновляем данные
+        bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+        loadAdminUsers(adminCurrentPage);
+        loadStatistics();
+        alert('Изменения сохранены');
+    }
+    
+    // Удаление пользователя
+    function deleteUser(userId, username) {
+        userToDelete = userId;
+        
+        document.getElementById('delete-user-info').textContent = 
+            `Пользователь: ${username} (ID: ${userId})`;
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+        modal.show();
+    }
+    
+    // Подтверждение удаления
+    async function confirmDeleteUser() {
+        if (!userToDelete) return;
+        
+        const result = await jsonRpcCall('admin_delete_user', {user_id: userToDelete});
+        
+        if (result.error) {
+            alert('Ошибка: ' + result.error.message);
+            return;
+        }
+        
+        // Закрываем модальное окно и обновляем данные
+        bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
+        loadAdminUsers(adminCurrentPage);
+        loadStatistics();
+        userToDelete = null;
+        alert('Пользователь удален');
+    }
+    
+    // Загружаем данные при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStatistics();
+        loadAdminUsers(1);
+        
+        // Обработка Enter в поиске
+        document.getElementById('adminSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loadAdminUsers(1);
+            }
+        });
+    });
+</script>
+{% endblock %}

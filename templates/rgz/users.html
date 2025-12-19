@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="welcome-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">Все пользователи</h2>
+                    <p class="text-muted mb-0">Выберите пользователя для общения</p>
+                </div>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin_page') }}" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear me-1" viewBox="0 0 16 16">
+                        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                    </svg>
+                    Панель администратора
+                </a>
+                {% endif %}
+            </div>
+            
+            <!-- Поиск пользователей -->
+            <div class="mb-4">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" 
+                           placeholder="Поиск по имени пользователя...">
+                    <button class="btn btn-outline" type="button" onclick="searchUsers()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                        Поиск
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Список пользователей -->
+            <div id="users-list">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка пользователей...</p>
+                </div>
+            </div>
+            
+            <!-- Пагинация -->
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div id="user-count" class="text-muted"></div>
+                <nav id="pagination" aria-label="Навигация по пользователям">
+                    <!-- Пагинация будет добавлена через JavaScript -->
+                </nav>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Боковая панель с информацией -->
+    <div class="col-lg-4">
+        <div class="welcome-card">
+            <h5 class="mb-3">Ваша информация</h5>
+            <div class="mb-3">
+                <div class="user-avatar d-inline-flex align-items-center justify-content-center me-2" 
+                     style="width: 40px; height: 40px; background: var(--pastel-blue);">
+                    {{ current_user.username[0].upper() }}
+                </div>
+                <span class="fw-bold">{{ current_user.username }}</span>
+                {% if current_user.is_admin %}
+                    <span class="admin-badge ms-2">Admin</span>
+                {% endif %}
+            </div>
+            <p class="small text-muted mb-3">
+                 Зарегистрирован: 
+                {% if current_user.created_at %}
+                    {% if current_user.created_at is string %}
+                        {{ current_user.created_at[:10] }}
+                    {% else %}
+                        {{ current_user.created_at.strftime('%d.%m.%Y') }}
+                    {% endif %}
+                {% else %}
+                    Неизвестно
+                {% endif %}
+            </p>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('logout') }}" class="btn btn-outline w-100 mb-2">
+                    Выйти
+                </a>
+                <button class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    Удалить аккаунт
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно удаления аккаунта -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удаление аккаунта</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger">Внимание! Это действие нельзя отменить.</p>
+                <p>Все ваши сообщения будут удалены без возможности восстановления.</p>
+                <p>Вы уверены, что хотите удалить свой аккаунт?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Отмена</button>
+                <form action="{{ url_for('delete_account_route') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Удалить аккаунт</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPage = 1;
+    let currentSearch = '';
+    const limit = 10;
+    
+    // Функция для JSON-RPC вызовов
+    async function jsonRpcCall(method, params = {}) {
+        try {
+            const response = await fetch('/api', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: method,
+                    params: params,
+                    id: Date.now()
+                })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('JSON-RPC error:', error);
+            return {error: {message: 'Ошибка сети'}};
+        }
+    }
+    
+    // Загрузка пользователей
+    async function loadUsers(page = 1, search = '') {
+        currentPage = page;
+        currentSearch = search;
+        
+        const container = document.getElementById('users-list');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p class="mt-2">Загрузка пользователей...</p>
+            </div>
+        `;
+        
+        const offset = (page - 1) * limit;
+        const params = {limit: limit, offset: offset};
+        if (search) {
+            params.search = search;
+        }
+        
+        const result = await jsonRpcCall('get_users', params);
+        
+        if (result.error) {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    Ошибка: ${result.error.message}
+                </div>
+            `;
+            return;
+        }
+        
+        const users = result.result.users;
+        
+        if (users.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    ${search ? 'Пользователи не найдены' : 'Нет других пользователей'}
+                </div>
+            `;
+            document.getElementById('user-count').textContent = 'Пользователи не найдены';
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+        
+        // Обновляем счетчик
+        document.getElementById('user-count').textContent = 
+            `Показано ${users.length} пользователей`;
+        
+        // Отображаем пользователей
+        let html = '';
+        users.forEach(user => {
+            const firstLetter = user.username.charAt(0).toUpperCase();
+            const avatarColors = ['var(--pastel-blue)', 'var(--pastel-green)', 'var(--pastel-pink)', 'var(--pastel-lavender)', 'var(--pastel-peach)'];
+            const avatarColor = avatarColors[user.id % avatarColors.length];
+            
+            // Форматируем время последнего сообщения
+            let lastMessageTime = '';
+            if (user.last_message_time) {
+                const time = new Date(user.last_message_time);
+                const now = new Date();
+                const diffDays = Math.floor((now - time) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) {
+                    lastMessageTime = time.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+                } else if (diffDays === 1) {
+                    lastMessageTime = 'Вчера';
+                } else if (diffDays < 7) {
+                    lastMessageTime = `${diffDays} дней назад`;
+                } else {
+                    lastMessageTime = time.toLocaleDateString('ru-RU');
+                }
+            }
+            
+            html += `
+                <div class="user-card">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="user-avatar" style="background: ${avatarColor}">
+                                ${firstLetter}
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="mb-1">${user.username}</h5>
+                                ${user.last_message_time ? 
+                                    `<small class="text-muted">${lastMessageTime}</small>` : ''}
+                            </div>
+                            ${user.last_message ? 
+                                `<p class="mb-0 text-muted small text-truncate" style="max-width: 300px;">
+                                    ${user.last_message}
+                                </p>` : 
+                                `<small class="text-muted">Нет сообщений</small>`
+                            }
+                        </div>
+                        <div class="col-auto">
+                            <a href="/chat/${user.id}" class="chat-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat" viewBox="0 0 16 16">
+                                    <path d="M2.678 11.894a1 1 0 0 1 .287.801 11 11 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8 8 0 0 0 8 14c3.996 0 7-2.807 7-6s-3.004-6-7-6-7 2.808-7 6c0 1.468.617 2.83 1.678 3.894m-.493 3.905a22 22 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a10 10 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z"/>
+                                </svg>
+                                Чат
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    // Поиск пользователей
+    function searchUsers() {
+        const searchTerm = document.getElementById('searchInput').value;
+        loadUsers(1, searchTerm);
+    }
+    
+    // Обработка Enter в поле поиска
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchUsers();
+        }
+    });
+    
+    // Загружаем пользователей при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUsers(1);
+    });
+</script>
+{% endblock %}

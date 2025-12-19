@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="welcome-card">
+            <h2 class="text-center mb-4">Вход в систему</h2>
+            
+            {% if error %}
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="mb-4">
+                    <label for="username" class="form-label">Логин</label>
+                    <input type="text" class="form-control" id="username" name="username" 
+                           value="{{ request.form.username if request.form.username else '' }}"
+                           required placeholder="Введите ваш логин">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="form-label">Пароль</label>
+                    <input type="password" class="form-control" id="password" name="password" 
+                           required placeholder="Введите ваш пароль">
+                </div>
+                
+                <div class="d-grid gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary py-2">
+                        Войти
+                    </button>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline py-2">
+                        Нет аккаунта? Зарегистрироваться
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

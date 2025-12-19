@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Боковая панель с чатами -->
+    <div class="col-lg-4 d-none d-lg-block">
+        <div class="welcome-card h-100">
+            <h5 class="mb-4">Чаты</h5>
+            <div id="chats-list">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка чатов...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Основной чат -->
+    <div class="col-lg-8">
+        <div class="welcome-card">
+            <!-- Заголовок чата -->
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="user-avatar me-3" style="background: var(--pastel-green);">
+                    {{ other_user.username[0].upper() }}
+                </div>
+                <div class="flex-grow-1">
+                    <h4 class="mb-1">{{ other_user.username }}</h4>
+                    <p class="text-muted small mb-0">
+                        {% if other_user.is_admin %}
+                            <span class="admin-badge me-2">Admin</span>
+                        {% endif %}
+                        Зарегистрирован: 
+                        {% if other_user.created_at %}
+                            {% if other_user.created_at is string %}
+                                {{ other_user.created_at[:10] }}
+                            {% else %}
+                            {{ other_user.created_at.strftime('%d.%m.%Y') }}
+                        {% endif %}
+                        {% else %}
+                            Неизвестно
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{{ url_for('users_page') }}" class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                    Назад
+                </a>
+            </div>
+            
+            <!-- Окно сообщений -->
+            <div id="chat-messages" class="mb-4" style="height: 400px; overflow-y: auto;">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка сообщений...</p>
+                </div>
+            </div>
+            
+            <!-- Форма отправки сообщения -->
+            <div class="border-top pt-3">
+                <form id="message-form">
+                    <div class="input-group">
+                        <textarea class="form-control" id="message-text" 
+                                  rows="2" placeholder="Введите сообщение..." 
+                                  style="resize: none;"></textarea>
+                        <button type="submit" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
+                                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
+                            </svg>
+                            Отправить
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">Нажмите Enter для отправки, Shift+Enter для новой строки</small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const otherUserId = {{ other_user.id }};
+    let messagesLoaded = false;
+    
+    // Функция для JSON-RPC вызовов
+    async function jsonRpcCall(method, params = {}) {
+        try {
+            const response = await fetch('/api', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: method,
+                    params: params,
+                    id: Date.now()
+                })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('JSON-RPC error:', error);
+            return {error: {message: 'Ошибка сети'}};
+        }
+    }
+    
+    // Загрузка чатов для боковой панели
+    async function loadChats() {
+        const result = await jsonRpcCall('get_users', {limit: 10});
+        
+        if (result.error) {
+            return;
+        }
+        
+        const users = result.result.users;
+        let html = '';
+        
+        users.forEach(user => {
+            const firstLetter = user.username.charAt(0).toUpperCase();
+            const avatarColors = ['var(--pastel-blue)', 'var(--pastel-green)', 'var(--pastel-pink)', 'var(--pastel-lavender)', 'var(--pastel-peach)'];
+            const avatarColor = avatarColors[user.id % avatarColors.length];
+            
+            html += `
+                <div class="user-card mb-2">
+                    <a href="/chat/${user.id}" class="text-decoration-none text-dark">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="user-avatar" style="width: 40px; height: 40px; background: ${avatarColor}">
+                                    ${firstLetter}
+                                </div>
+                            </div>
+                            <div class="col">
+                                <h6 class="mb-0">${user.username}</h6>
+                                ${user.last_message ? 
+                                    `<small class="text-muted text-truncate d-block" style="max-width: 150px;">
+                                        ${user.last_message}
+                                    </small>` : ''}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            `;
+        });
+        
+        document.getElementById('chats-list').innerHTML = html || '<p class="text-muted">Нет чатов</p>';
+    }
+    
+    // Форматирование времени
+    function formatTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        
+        if (diffMins < 1) {
+            return 'Только что';
+        } else if (diffMins < 60) {
+            return `${diffMins} мин назад`;
+        } else if (date.toDateString() === now.toDateString()) {
+            return date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+        } else {
+            return date.toLocaleDateString('ru-RU');
+        }
+    }
+    
+    // Загрузка сообщений
+    async function loadMessages() {
+        const container = document.getElementById('chat-messages');
+        
+        if (!messagesLoaded) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка сообщений...</p>
+                </div>
+            `;
+        }
+        
+        const result = await jsonRpcCall('get_conversation', {
+            other_user_id: otherUserId,
+            limit: 50
+        });
+        
+        if (result.error) {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    Ошибка: ${result.error.message}
+                </div>
+            `;
+            return;
+        }
+        
+        const messages = result.result.messages.reverse(); // Переворачиваем чтобы новые были внизу
+        
+        if (messages.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <p class="text-muted">Нет сообщений. Начните общение!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        let lastDate = null;
+        
+        messages.forEach(msg => {
+            const msgDate = new Date(msg.sent_at).toDateString();
+            const isMine = msg.is_mine;
+            
+            // Добавляем дату если она изменилась
+            if (lastDate !== msgDate) {
+                lastDate = msgDate;
+                const date = new Date(msg.sent_at);
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                let dateText;
+                if (date.toDateString() === today.toDateString()) {
+                    dateText = 'Сегодня';
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    dateText = 'Вчера';
+                } else {
+                    dateText = date.toLocaleDateString('ru-RU', {day: 'numeric', month: 'long'});
+                }
+                
+                html += `
+                    <div class="text-center my-3">
+                        <span class="badge bg-light text-dark">${dateText}</span>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="mb-3 ${isMine ? 'text-end' : ''}">
+                    <div class="d-inline-block p-3 rounded-3" 
+                         style="max-width: 70%; 
+                                background: ${isMine ? 'var(--pastel-blue)' : 'var(--pastel-green)'};
+                                border: 1px solid ${isMine ? '#b3d9ff' : '#b3e6b3'};">
+                        <div class="mb-1">${msg.text}</div>
+                        <div class="small text-muted">
+                            ${formatTime(msg.sent_at)}
+                            ${isMine && msg.can_delete ? 
+                                `<button class="btn btn-link btn-sm p-0 ms-2 text-danger" 
+                                        onclick="deleteMessage(${msg.id})" 
+                                        title="Удалить">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                    </svg>
+                                </button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        container.scrollTop = container.scrollHeight; // Прокручиваем вниз
+        messagesLoaded = true;
+        
+        // Автоматическое обновление каждые 10 секунд
+        setTimeout(loadMessages, 10000);
+    }
+    
+    // Удаление сообщения
+    async function deleteMessage(messageId) {
+        if (!confirm('Удалить это сообщение?')) {
+            return;
+        }
+        
+        const result = await jsonRpcCall('delete_message', {
+            message_id: messageId,
+            delete_for: 'me'
+        });
+        
+        if (result.error) {
+            alert('Ошибка при удалении: ' + result.error.message);
+            return;
+        }
+        
+        loadMessages(); // Перезагружаем сообщения
+    }
+    
+    // Отправка сообщения
+    document.getElementById('message-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const textarea = document.getElementById('message-text');
+        const text = textarea.value.trim();
+        
+        if (!text) {
+            return;
+        }
+        
+        // Блокируем форму
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+            <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            Отправка...
+        `;
+        
+        const result = await jsonRpcCall('send_message', {
+            receiver_id: otherUserId,
+            text: text
+        });
+        
+        // Восстанавливаем форму
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
+                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
+            </svg>
+            Отправить
+        `;
+        
+        if (result.error) {
+            alert('Ошибка отправки: ' + result.error.message);
+            return;
+        }
+        
+        // Очищаем поле и перезагружаем сообщения
+        textarea.value = '';
+        loadMessages();
+    });
+    
+    // Обработка Enter для отправки
+    document.getElementById('message-text').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('message-form').dispatchEvent(new Event('submit'));
+        }
+    });
+    
+    // Загружаем данные при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadChats();
+        loadMessages();
+    });
+</script>
+
+<style>
+    .user-card a:hover {
+        background-color: rgba(0,0,0,0.02);
+        border-radius: 8px;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
