@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="row">
-    <!-- Боковая панель с чатами -->
     <div class="col-lg-4 d-none d-lg-block">
         <div class="welcome-card h-100">
             <h5 class="mb-4">Чаты</h5>
@@ -17,10 +16,8 @@
         </div>
     </div>
     
-    <!-- Основной чат -->
     <div class="col-lg-8">
         <div class="welcome-card">
-            <!-- Заголовок чата -->
             <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
                 <div class="user-avatar me-3" style="background: var(--pastel-green);">
                     {{ other_user.username[0].upper() }}
@@ -51,7 +48,6 @@
                 </a>
             </div>
             
-            <!-- Окно сообщений -->
             <div id="chat-messages" class="mb-4" style="height: 400px; overflow-y: auto;">
                 <div class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
@@ -61,7 +57,6 @@
                 </div>
             </div>
             
-            <!-- Форма отправки сообщения -->
             <div class="border-top pt-3">
                 <form id="message-form">
                     <div class="input-group">
@@ -88,7 +83,6 @@
     const otherUserId = {{ other_user.id }};
     let messagesLoaded = false;
     
-    // Функция для JSON-RPC вызовов
     async function jsonRpcCall(method, params = {}) {
         try {
             const response = await fetch('/api', {
@@ -108,7 +102,6 @@
         }
     }
     
-    // Загрузка чатов для боковой панели
     async function loadChats() {
         const result = await jsonRpcCall('get_users', {limit: 10});
         
@@ -149,7 +142,6 @@
         document.getElementById('chats-list').innerHTML = html || '<p class="text-muted">Нет чатов</p>';
     }
     
-    // Форматирование времени
     function formatTime(dateString) {
         const date = new Date(dateString);
         const now = new Date();
@@ -167,7 +159,6 @@
         }
     }
     
-    // Загрузка сообщений
     async function loadMessages() {
         const container = document.getElementById('chat-messages');
         
@@ -196,7 +187,7 @@
             return;
         }
         
-        const messages = result.result.messages.reverse(); // Переворачиваем чтобы новые были внизу
+        const messages = result.result.messages.reverse();
         
         if (messages.length === 0) {
             container.innerHTML = `
@@ -214,7 +205,6 @@
             const msgDate = new Date(msg.sent_at).toDateString();
             const isMine = msg.is_mine;
             
-            // Добавляем дату если она изменилась
             if (lastDate !== msgDate) {
                 lastDate = msgDate;
                 const date = new Date(msg.sent_at);
@@ -263,14 +253,12 @@
         });
         
         container.innerHTML = html;
-        container.scrollTop = container.scrollHeight; // Прокручиваем вниз
+        container.scrollTop = container.scrollHeight; 
         messagesLoaded = true;
         
-        // Автоматическое обновление каждые 10 секунд
         setTimeout(loadMessages, 10000);
     }
     
-    // Удаление сообщения
     async function deleteMessage(messageId) {
         if (!confirm('Удалить это сообщение?')) {
             return;
@@ -286,10 +274,9 @@
             return;
         }
         
-        loadMessages(); // Перезагружаем сообщения
+        loadMessages();
     }
     
-    // Отправка сообщения
     document.getElementById('message-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -300,7 +287,6 @@
             return;
         }
         
-        // Блокируем форму
         const submitBtn = this.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
         submitBtn.innerHTML = `
@@ -315,7 +301,6 @@
             text: text
         });
         
-        // Восстанавливаем форму
         submitBtn.disabled = false;
         submitBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
@@ -329,12 +314,10 @@
             return;
         }
         
-        // Очищаем поле и перезагружаем сообщения
         textarea.value = '';
         loadMessages();
     });
     
-    // Обработка Enter для отправки
     document.getElementById('message-text').addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -342,7 +325,6 @@
         }
     });
     
-    // Загружаем данные при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         loadChats();
         loadMessages();

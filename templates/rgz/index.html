@@ -23,7 +23,6 @@
                     <p class="text-muted mb-4">Выберите пользователя для начала общения</p>
                     
                     <div id="users-list">
-                        <!-- Список пользователей загрузится через JavaScript -->
                         <div class="text-center py-4">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Загрузка...</span>
@@ -40,7 +39,6 @@
 
 {% if current_user.is_authenticated %}
 <script>
-    // Функция для JSON-RPC вызовов
     async function jsonRpcCall(method, params = {}) {
         try {
             const response = await fetch('/api', {
@@ -60,7 +58,6 @@
         }
     }
     
-    // Получение списка пользователей
     async function loadUsers() {
         const container = document.getElementById('users-list');
         
@@ -88,9 +85,7 @@
         
         let html = '';
         users.forEach(user => {
-            // Получаем первую букву имени для аватара
             const firstLetter = user.username.charAt(0).toUpperCase();
-            // Определяем цвет аватара
             const avatarColors = ['var(--pastel-blue)', 'var(--pastel-green)', 'var(--pastel-pink)', 'var(--pastel-lavender)', 'var(--pastel-peach)'];
             const avatarColor = avatarColors[user.id % avatarColors.length];
             
@@ -123,8 +118,6 @@
         
         container.innerHTML = html;
     }
-    
-    // Загружаем пользователей при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         loadUsers();
     });

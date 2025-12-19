@@ -4,7 +4,6 @@
 <div class="row">
     <div class="col-12">
         <div class="welcome-card">
-            <!-- Заголовок -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="mb-1">
@@ -24,7 +23,6 @@
                 </a>
             </div>
             
-            <!-- Статистика -->
             <div class="row mb-4">
                 <div class="col-md-3 mb-3">
                     <div class="p-3 rounded-3" style="background: var(--pastel-blue);">
@@ -52,7 +50,6 @@
                 </div>
             </div>
             
-            <!-- Поиск и фильтры -->
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row g-3">
@@ -79,7 +76,6 @@
                 </div>
             </div>
             
-            <!-- Таблица пользователей -->
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -105,18 +101,14 @@
                 </table>
             </div>
             
-            <!-- Пагинация -->
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <div id="admin-user-count" class="text-muted"></div>
                 <nav id="admin-pagination" aria-label="Навигация по пользователям">
-                    <!-- Пагинация будет добавлена через JavaScript -->
-                </nav>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно редактирования пользователя -->
 <div class="modal fade" id="editUserModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -157,7 +149,6 @@
     </div>
 </div>
 
-<!-- Модальное окно подтверждения удаления -->
 <div class="modal fade" id="deleteUserModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -184,7 +175,6 @@
     let adminLimit = 10;
     let userToDelete = null;
     
-    // Функция для JSON-RPC вызовов
     async function jsonRpcCall(method, params = {}) {
         try {
             const response = await fetch('/api', {
@@ -204,7 +194,6 @@
         }
     }
     
-    // Загрузка статистики
     async function loadStatistics() {
         const result = await jsonRpcCall('admin_get_all_users', {limit: 1000});
         
@@ -215,23 +204,19 @@
         
         const users = result.result.users;
         
-        // Общая статистика
         document.getElementById('total-users').textContent = users.length;
         
         const admins = users.filter(u => u.is_admin).length;
         document.getElementById('admin-count').textContent = admins;
         
-        // Подсчет сообщений
         const totalMessages = users.reduce((sum, user) => 
             sum + user.messages_sent + user.messages_received, 0);
         document.getElementById('total-messages').textContent = totalMessages;
         
-        // Активные сегодня (простая заглушка)
         const activeToday = Math.floor(users.length * 0.3); // 30% от общего числа
         document.getElementById('active-today').textContent = activeToday;
     }
     
-    // Загрузка пользователей для админки
     async function loadAdminUsers(page = 1) {
         adminCurrentPage = page;
     
@@ -253,13 +238,11 @@
     
         console.log("Поиск пользователей:", { search, roleFilter, offset });
     
-        // Создаем параметры для запроса
         const params = {
             limit: adminLimit,
             offset: offset
         };
     
-        // Добавляем параметры поиска если они есть
         if (search) {
             params.search = search;
         }
@@ -288,11 +271,9 @@
         const users = result.result.users;
         const total = result.result.total;
     
-        // Обновляем счетчик
         document.getElementById('admin-user-count').textContent = 
             `Показано ${users.length} из ${total} пользователей`;
     
-        // Очищаем таблицу
         let html = '';
     
         if (users.length === 0) {
@@ -360,12 +341,10 @@
             });
     }
 
-    // Автоматический поиск при изменении фильтра ролей
     document.getElementById('roleFilter').addEventListener('change', function() {
     loadAdminUsers(1);
     });
 
-    // Кнопка сброса фильтров (добавьте в HTML после кнопки поиска)
     function addResetButton() {
         const searchRow = document.querySelector('.row.g-3');
         const resetButton = `
@@ -380,26 +359,22 @@
             </div>
         `;
     
-        // Если кнопка еще не добавлена
         if (!document.getElementById('reset-filters-btn')) {
             searchRow.insertAdjacentHTML('afterend', resetButton);
         }
     }
 
-    // Функция сброса фильтров
     function resetFilters() {
         document.getElementById('adminSearch').value = '';
         document.getElementById('roleFilter').value = '';
         loadAdminUsers(1);
     }
 
-    // Добавляем кнопку при загрузке
     document.addEventListener('DOMContentLoaded', function() {
         loadStatistics();
         loadAdminUsers(1);
         addResetButton();
     
-        // Обработка Enter в поле поиска
         document.getElementById('adminSearch').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 loadAdminUsers(1);
@@ -409,11 +384,9 @@
     
     table.innerHTML = html;
     
-    // Создаем пагинацию
     createPagination(total, adminLimit, page);
 }
 
-    // Создание пагинации
     function createPagination(total, limit, currentPage) {
         const totalPages = Math.ceil(total / limit);
         const pagination = document.getElementById('admin-pagination');
@@ -425,7 +398,6 @@
         
         let html = '<ul class="pagination pagination-sm mb-0">';
         
-        // Кнопка "Назад"
         if (currentPage > 1) {
             html += `
                 <li class="page-item">
@@ -436,7 +408,6 @@
             `;
         }
         
-        // Номера страниц
         const maxPages = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
         let endPage = Math.min(totalPages, startPage + maxPages - 1);
@@ -455,7 +426,6 @@
             `;
         }
         
-        // Кнопка "Вперед"
         if (currentPage < totalPages) {
             html += `
                 <li class="page-item">
@@ -470,7 +440,6 @@
         pagination.innerHTML = html;
     }
     
-    // Редактирование пользователя
     async function editUser(userId) {
         const result = await jsonRpcCall('get_user_info', {user_id: userId});
         
@@ -490,7 +459,6 @@
         modal.show();
     }
     
-    // Сохранение изменений пользователя
     async function saveUserChanges() {
         const userId = document.getElementById('edit-user-id').value;
         const isAdmin = document.getElementById('edit-is-admin').checked;
@@ -516,14 +484,12 @@
             return;
         }
         
-        // Закрываем модальное окно и обновляем данные
         bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
         loadAdminUsers(adminCurrentPage);
         loadStatistics();
         alert('Изменения сохранены');
     }
     
-    // Удаление пользователя
     function deleteUser(userId, username) {
         userToDelete = userId;
         
@@ -534,7 +500,6 @@
         modal.show();
     }
     
-    // Подтверждение удаления
     async function confirmDeleteUser() {
         if (!userToDelete) return;
         
@@ -545,7 +510,6 @@
             return;
         }
         
-        // Закрываем модальное окно и обновляем данные
         bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
         loadAdminUsers(adminCurrentPage);
         loadStatistics();
@@ -553,12 +517,10 @@
         alert('Пользователь удален');
     }
     
-    // Загружаем данные при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         loadStatistics();
         loadAdminUsers(1);
         
-        // Обработка Enter в поиске
         document.getElementById('adminSearch').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 loadAdminUsers(1);

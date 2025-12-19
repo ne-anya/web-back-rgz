@@ -12,36 +12,28 @@ app = Flask(__name__)
 app.config.from_object(config.Config)
 app.secret_key = app.config['SECRET_KEY']
 
-# Инициализация Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Пожалуйста, войдите в систему для доступа к этой странице.'
 
-# Инициализация JSON-RPC обработчика
 jsonrpc_handler = JSONRPCHandler()
 
-# ========== ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ ==========
-
 def get_db():
-    """Получение соединения с БД"""
     if 'db' not in g:
         g.db = sqlite3.connect('messenger.db')
         g.db.row_factory = sqlite3.Row
     return g.db
 
 def close_db(e=None):
-    """Закрытие соединения с БД"""
     db = g.pop('db', None)
     if db is not None:
         db.close()
 
 def init_database():
-    """Инициализация базы данных"""
     conn = sqlite3.connect('messenger.db')
     cursor = conn.cursor()
     
-    # Таблица users
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +44,6 @@ def init_database():
         )
     ''')
     
-    # Таблица messages
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +58,6 @@ def init_database():
         )
     ''')
     
-    # Проверяем есть ли администратор
     cursor.execute("SELECT id FROM users WHERE username = 'admin'")
     if not cursor.fetchone():
         admin_hash = generate_password_hash('admin123')
@@ -98,8 +88,6 @@ def init_database():
     conn.commit()
     conn.close()
     return True
-
-# ========== МОДЕЛИ ==========
 
 class User:
     def __init__(self, id, username, password_hash, is_admin=False, created_at=None):
@@ -185,11 +173,8 @@ class User:
 def load_user(user_id):
     return User.get(user_id)
 
-# ========== HTML МАРШРУТЫ ==========
-
 @app.route('/')
 def index():
-    """Главная страница"""
     if current_user.is_authenticated:
         return redirect(url_for('users_page'))
     return render_template('/rgz/index.html', 
@@ -198,7 +183,6 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Страница входа"""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -223,7 +207,6 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """Страница регистрации"""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -232,7 +215,6 @@ def register():
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
         
-        # Валидация
         valid_username, username_msg = validate_username(username)
         valid_password, password_msg = validate_password(password)
         
@@ -257,7 +239,6 @@ def register():
                                  fio="Вотчинникова Анна Андреевна",
                                  group="ФБИ-33")
         
-        # Создание пользователя
         user = User.create(username, password)
         if user:
             login_user(user)
@@ -275,7 +256,6 @@ def register():
 @app.route('/users')
 @login_required
 def users_page():
-    """Страница списка пользователей"""
     return render_template('/rgz/users.html',
                           fio="Вотчинникова Анна Андреевна",
                           group="ФБИ-33",
@@ -284,7 +264,6 @@ def users_page():
 @app.route('/chat/<int:user_id>')
 @login_required
 def chat_page(user_id):
-    """Страница чата с пользователем"""
     # Получаем пользователя из базы данных
     db = get_db()
     user_data = db.execute(
@@ -313,7 +292,6 @@ def chat_page(user_id):
 @app.route('/admin')
 @login_required
 def admin_page():
-    """Админ-панель"""
     if not current_user.is_admin:
         return redirect(url_for('index'))
     
@@ -325,27 +303,23 @@ def admin_page():
 @app.route('/logout')
 @login_required
 def logout():
-    """Выход из системы"""
     logout_user()
     return redirect(url_for('index'))
 
 @app.route('/delete_account', methods=['POST'])
 @login_required
 def delete_account_route():
-    """Удаление своего аккаунта (HTML форма)"""
     # Используем JSON-RPC метод
     response = jsonrpc_handler.delete_account()
     return redirect(url_for('index'))
 
-# ========== ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ ==========
 
 @app.route('/init')
 def init_db():
-    """Инициализация базы данных (аналог примера)"""
     try:
         if init_database():
             return '''
-                <h1>✅ База данных успешно инициализирована!</h1>
+                <h1>База данных успешно инициализирована!</h1>
                 <p>Тестовые аккаунты:</p>
                 <ul>
                     <li>Администратор: <strong>admin</strong> / <strong>admin123</strong></li>
@@ -356,15 +330,12 @@ def init_db():
                 <p><a href="/">Перейти на главную страницу</a></p>
             '''
         else:
-            return "❌ Ошибка при инициализации БД"
+            return "Ошибка при инициализации БД"
     except Exception as e:
-        return f"❌ Ошибка: {str(e)}"
-
-# ========== JSON-RPC API ==========
+        return f"Ошибка: {str(e)}"
 
 @app.route('/api', methods=['POST'])
 def api():
-    """JSON-RPC endpoint"""
     try:
         return jsonrpc_handler.handle_request()
     except JSONRPCError as e:
@@ -387,38 +358,30 @@ def api():
             'id': request.json.get('id') if request.is_json else None
         }), 500
 
-# ========== ВСПОМОГАТЕЛЬНЫЕ МАРШРУТЫ ==========
-
 @app.route('/api/ping')
 def ping():
-    """Проверка работы API"""
     return jsonify({'status': 'ok', 'message': 'API работает'})
 
 @app.route('/api/user_info')
 @login_required
 def user_info():
-    """Информация о текущем пользователе"""
     return jsonify(current_user.to_dict())
 
-# ========== ЗАКРЫТИЕ БД ПРИ ЗАВЕРШЕНИИ ==========
 app.teardown_appcontext(close_db)
 
-# ========== ЗАПУСК ==========
 if __name__ == '__main__':
-    # Проверяем наличие БД
     try:
         conn = sqlite3.connect('messenger.db')
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
         if not cursor.fetchone():
-            print("⚠️  База данных не инициализирована")
-            print("📌 Перейдите по ссылке: http://localhost:5000/init")
+            print("База данных не инициализирована")
+            print("Перейдите по ссылке: http://localhost:5000/init")
         else:
-            print("✅ База данных готова")
+            print("База данных готова")
         conn.close()
     except Exception as e:
-        print(f"❌ Ошибка подключения к БД: {e}")
+        print(f"Ошибка подключения к БД: {e}")
     
-    # Запускаем приложение
-    print("🚀 Запуск приложения на http://localhost:5000")
+    print("Запуск приложения на http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,6 +1,3 @@
-/* Дополнительные стили для мессенджера */
-
-/* Анимации */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -41,7 +38,6 @@
     text-align: right;
 }
 
-/* Стили для списка пользователей */
 .user-item {
     padding: 15px;
     border-radius: 10px;
@@ -62,7 +58,6 @@
     border-color: #6a11cb;
 }
 
-/* Стили для статусов онлайн */
 .status-online {
     display: inline-block;
     width: 10px;
@@ -100,7 +95,6 @@
     background: linear-gradient(135deg, #5a0db5 0%, #1c68e8 100%);
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
     .user-badge {
         font-size: 12px;
@@ -116,7 +110,6 @@
     }
 }
 
-/* Эффекты для кнопок */
 .btn {
     transition: all 0.3s;
 }
@@ -126,13 +119,11 @@
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* Стили для форм */
 .form-control:focus {
     border-color: #6a11cb;
     box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.25);
 }
 
-/* Стили для загрузки */
 .loading-spinner {
     display: inline-block;
     width: 50px;

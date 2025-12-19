@@ -4,7 +4,6 @@ from flask import request, jsonify
 from flask_login import current_user
 
 def validate_username(username):
-    """Валидация логина: только латиница, цифры и знаки препинания"""
     if not username or len(username) < 3:
         return False, "Логин должен содержать минимум 3 символа"
     
@@ -15,7 +14,6 @@ def validate_username(username):
     return True, "OK"
 
 def validate_password(password):
-    """Валидация пароля"""
     if not password or len(password) < 6:
         return False, "Пароль должен содержать минимум 6 символов"
     
@@ -25,14 +23,11 @@ def validate_password(password):
     
     return True, "OK"
 
-# ========== ДЕКОРАТОРЫ ДЛЯ JSON-RPC ==========
 
 def login_required_jsonrpc(f):
-    """Декоратор для проверки авторизации в JSON-RPC методах"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
-            # Возвращаем JSON-RPC ошибку
             return {
                 'jsonrpc': '2.0',
                 'error': {
@@ -45,7 +40,6 @@ def login_required_jsonrpc(f):
     return decorated_function
 
 def admin_required(f):
-    """Декоратор для проверки прав администратора в JSON-RPC"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
@@ -71,10 +65,8 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ========== СТАРЫЕ ДЕКОРАТОРЫ (если нужны для HTML маршрутов) ==========
 
 def login_required_html(f):
-    """Декоратор для проверки авторизации в HTML маршрутах"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
@@ -84,7 +76,6 @@ def login_required_html(f):
     return decorated_function
 
 def admin_required_html(f):
-    """Декоратор для проверки прав администратора в HTML маршрутах"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:

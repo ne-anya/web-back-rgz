@@ -11,7 +11,6 @@ class JSONRPCError(Exception):
         self.data = data
 
 class JSONRPCHandler:
-    """Обработчик JSON-RPC запросов"""
     
     def __init__(self):
         self.methods = {
@@ -28,7 +27,6 @@ class JSONRPCHandler:
         }
     
     def _get_db(self):
-        """Получение соединения с БД"""
         from flask import g
         if 'db' not in g:
             g.db = sqlite3.connect('messenger.db')
@@ -36,7 +34,6 @@ class JSONRPCHandler:
         return g.db
     
     def handle_request(self):
-        """Основной обработчик запроса"""
         if not request.is_json:
             raise JSONRPCError(-32700, 'Invalid JSON')
         
@@ -89,18 +86,15 @@ class JSONRPCHandler:
             'id': request_id
         })
     
-    # ========== Методы JSON-RPC ==========
     
     @login_required_jsonrpc
     def send_message(self, receiver_id, text):
-        """Отправка сообщения"""
         if not text or len(text.strip()) == 0:
             raise JSONRPCError(-32602, 'Текст сообщения не может быть пустым')
         
         if len(text) > 1000:
             raise JSONRPCError(-32602, 'Сообщение слишком длинное (максимум 1000 символов)')
         
-        # Получаем пользователя из БД
         db = self._get_db()
         receiver = db.execute(
             'SELECT * FROM users WHERE id = ?', (receiver_id,)
@@ -131,7 +125,6 @@ class JSONRPCHandler:
     
     @login_required_jsonrpc
     def get_messages(self, limit=50, offset=0):
-        """Получение последних сообщений пользователя"""
         try:
             limit = int(limit)
             offset = int(offset)
@@ -172,7 +165,6 @@ class JSONRPCHandler:
     
     @login_required_jsonrpc
     def delete_message(self, message_id, delete_for='me'):
-        """Удаление сообщения"""
         db = self._get_db()
         message = db.execute(
             'SELECT * FROM messages WHERE id = ?', (message_id,)
@@ -197,7 +189,6 @@ class JSONRPCHandler:
                 raise JSONRPCError(-32001, 'Нет прав на удаление этого сообщения')
         
         elif delete_for == 'both' and current_user.id == message['sender_id']:
-            # Удаляем для всех (только отправитель)
             db.execute(
                 'UPDATE messages SET is_deleted_by_sender = 1 WHERE id = ?',
                 (message_id,)
